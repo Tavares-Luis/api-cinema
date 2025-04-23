@@ -1,40 +1,34 @@
 import { DataTypes } from "sequelize";
 import { sequelize } from "../config/postgres.js";
 
-const Filme = sequelize.define(
 
-    'filmes',
+const Parametro = sequelize.define(
+
+    'parametros',
     {
         id:{
             type: DataTypes.INTEGER,
             primaryKey: true,
             autoIncrement: true,
         },
-        nome: {
-            type: DataTypes.STRING(100),
-            allowNull: false,
-        },
-        descricao: {
+        chave:{
             type: DataTypes.STRING(250),
             allowNull: false,
+            unique: true,
         },
-        autor:{
-            type: DataTypes.STRING(100),
+        valor: {
+            type: DataTypes.DOUBLE,
             allowNull: false,
-        },
-        duracao: {
-            type: DataTypes.INTEGER,
+            defaultValue: 0,
         }
     },
     {
         freezeTableName: true,
         timestamps: true,
         createdAt: 'created_at',
-        updatedAt: 'updated_at',
+        updatedAt: 'update_at',
     }
-
 
 );
 
-
-export default Filmes;
+export default Parametro;

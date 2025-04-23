@@ -1,4 +1,4 @@
-import Filme from "../models/FilmeModel.js";
+import Parametro from "../models/ParametroModel.js";
 
 
 
@@ -8,7 +8,7 @@ const get = async (req , res) => {
         const id = req.params.id ? req.params.id.toString().replace(/\D/g, '') : null;
 
         if(!id){
-            const response = await Filme.findAll({
+            const response = await Parametro.findAll({
                 order: [['id', 'desc']],
             });
 
@@ -18,7 +18,7 @@ const get = async (req , res) => {
             });
         }
 
-        const response = await Filme.findOne({
+        const response = await Parametro.findOne({
             where: {
                 id: id
             }
@@ -43,17 +43,13 @@ const get = async (req , res) => {
 const create = async (corpo) => {
     try {
         const {
-            nome,
-            descricao,
-            autor,
-            duracao,
+            chave,
+            valor,
         } = corpo;
 
-        const response = await Filme.create({
-            nome,
-            descricao,
-            autor,
-            duracao,
+        const response = await Parametro.create({
+            chave,
+            valor,
         });
 
         return response;
@@ -67,7 +63,7 @@ const update = async (corpo , id) => {
 
     try {
         
-        const response = await Filme.findOne({
+        const response = await Parametro.findOne({
             where:{
                 id
             }
@@ -119,10 +115,10 @@ const destroy = async (req , res ) => {
     try {
         
         if(!id){
-            return res.status(400).send('Informa ae paezao');
+            return res.status(400).send('Informa parametrosController ae paezao');
         };
         
-        const response = await Filme.findOne({
+        const response = await Parametro.findOne({
             where: {
                 id
             }

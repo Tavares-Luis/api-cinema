@@ -1,5 +1,6 @@
-import Filme from "../models/FilmeModel.js";
-
+import PadraoLugar from "../models/PadraoLugarModel.js";
+import Sala from "../models/SalaModel.js";
+import Sessao from "../models/SessaoModel.js";
 
 
 const get = async (req , res) => {
@@ -8,7 +9,7 @@ const get = async (req , res) => {
         const id = req.params.id ? req.params.id.toString().replace(/\D/g, '') : null;
 
         if(!id){
-            const response = await Filme.findAll({
+            const response = await Sessao.findAll({
                 order: [['id', 'desc']],
             });
 
@@ -18,7 +19,7 @@ const get = async (req , res) => {
             });
         }
 
-        const response = await Filme.findOne({
+        const response = await Sessao.findOne({
             where: {
                 id: id
             }
@@ -41,25 +42,40 @@ const get = async (req , res) => {
 };
 
 const create = async (corpo) => {
+
+    
     try {
         const {
-            nome,
-            descricao,
-            autor,
-            duracao,
+            dataInicio,
+            dataFinal,
+            preco,
+            idSala,
+            idFilme
         } = corpo;
 
-        const response = await Filme.create({
-            nome,
-            descricao,
-            autor,
-            duracao,
+        const sala = await Sala.findByPk(idSala);
+        
+        const lugaresData = await PadraoLugar.findOne({
+            where: { id: sala.idPadraoLugares }
+        });
+
+        if (!lugaresData) {
+            throw new Error('Configuração de lugares não encontrada');
+        }
+
+        const response = await Sessao.create({
+            lugares: lugaresData.lugares,
+            dataInicio,
+            dataFinal,
+            preco,
+            idFilme,
+            idSala
         });
 
         return response;
 
     } catch (error) {
-        throw new Error (error.message);
+        throw new Error(error.message);
     }
 };
 
@@ -67,7 +83,7 @@ const update = async (corpo , id) => {
 
     try {
         
-        const response = await Filme.findOne({
+        const response = await Sessao.findOne({
             where:{
                 id
             }
@@ -78,6 +94,7 @@ const update = async (corpo , id) => {
         }
 
         Object.keys(corpo).forEach((item)=> response[item] = corpo[item]);
+        
         await response.save();
 
         return response;
@@ -122,7 +139,7 @@ const destroy = async (req , res ) => {
             return res.status(400).send('Informa ae paezao');
         };
         
-        const response = await Filme.findOne({
+        const response = await Sessao.findOne({
             where: {
                 id
             }
@@ -145,6 +162,7 @@ const destroy = async (req , res ) => {
         });
     };
 };
+
 
 export default {
     get, 

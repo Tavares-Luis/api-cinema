@@ -1,4 +1,5 @@
-import Filme from "../models/FilmeModel.js";
+import Usuario from "../models/UsuarioModel.js";
+
 
 
 
@@ -8,7 +9,7 @@ const get = async (req , res) => {
         const id = req.params.id ? req.params.id.toString().replace(/\D/g, '') : null;
 
         if(!id){
-            const response = await Filme.findAll({
+            const response = await Usuario.findAll({
                 order: [['id', 'desc']],
             });
 
@@ -18,7 +19,7 @@ const get = async (req , res) => {
             });
         }
 
-        const response = await Filme.findOne({
+        const response = await Usuario.findOne({
             where: {
                 id: id
             }
@@ -44,16 +45,18 @@ const create = async (corpo) => {
     try {
         const {
             nome,
-            descricao,
-            autor,
-            duracao,
+            email,
+            cpf,
+            estudante,
+            idCargo,
         } = corpo;
 
-        const response = await Filme.create({
+        const response = await Usuario.create({
             nome,
-            descricao,
-            autor,
-            duracao,
+            email,
+            cpf,
+            estudante,
+            idCargo,
         });
 
         return response;
@@ -67,7 +70,7 @@ const update = async (corpo , id) => {
 
     try {
         
-        const response = await Filme.findOne({
+        const response = await Usuario.findOne({
             where:{
                 id
             }
@@ -122,7 +125,7 @@ const destroy = async (req , res ) => {
             return res.status(400).send('Informa ae paezao');
         };
         
-        const response = await Filme.findOne({
+        const response = await Usuario.findOne({
             where: {
                 id
             }

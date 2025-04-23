@@ -1,18 +1,19 @@
 import { DataTypes } from "sequelize";
 import { sequelize } from "../config/postgres.js";
+import PadraoLugar from "./PadraoLugarModel.js";
 
 
 
-const Cargo = sequelize.define(
+const Sala = sequelize.define(
 
-    'cargos',
+    'salas',
     {
         id:{
             type: DataTypes.INTEGER,
             primaryKey: true,
             autoIncrement: true,
         },
-        descricao:{
+        observacao:{
             type: DataTypes.STRING(250),
             allowNull: false,
         }
@@ -26,5 +27,16 @@ const Cargo = sequelize.define(
 
 );
 
+Sala.belongsTo(PadraoLugar, {
+    as: 'padraoLugar',
+    foreignKey: {
+        name: 'idPadraoLugares',
+        field: 'id_padrao_lugares',
+        allowNull: false,
+    },
+    onUpdate: 'NO ACTION',
+    onDelete: 'NO ACTION',
+});
 
-export default Cargo;
+
+export default Sala;

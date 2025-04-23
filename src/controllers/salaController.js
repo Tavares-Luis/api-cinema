@@ -1,5 +1,4 @@
-import Filme from "../models/FilmeModel.js";
-
+import Sala from "../models/SalaModel.js";
 
 
 const get = async (req , res) => {
@@ -8,7 +7,7 @@ const get = async (req , res) => {
         const id = req.params.id ? req.params.id.toString().replace(/\D/g, '') : null;
 
         if(!id){
-            const response = await Filme.findAll({
+            const response = await Sala.findAll({
                 order: [['id', 'desc']],
             });
 
@@ -18,7 +17,7 @@ const get = async (req , res) => {
             });
         }
 
-        const response = await Filme.findOne({
+        const response = await Sala.findOne({
             where: {
                 id: id
             }
@@ -43,17 +42,13 @@ const get = async (req , res) => {
 const create = async (corpo) => {
     try {
         const {
-            nome,
-            descricao,
-            autor,
-            duracao,
+            observacao,
+            idPadraoLugares,
         } = corpo;
 
-        const response = await Filme.create({
-            nome,
-            descricao,
-            autor,
-            duracao,
+        const response = await Sala.create({
+            observacao,
+            idPadraoLugares,
         });
 
         return response;
@@ -67,7 +62,7 @@ const update = async (corpo , id) => {
 
     try {
         
-        const response = await Filme.findOne({
+        const response = await Sala.findOne({
             where:{
                 id
             }
@@ -122,7 +117,7 @@ const destroy = async (req , res ) => {
             return res.status(400).send('Informa ae paezao');
         };
         
-        const response = await Filme.findOne({
+        const response = await Sala.findOne({
             where: {
                 id
             }

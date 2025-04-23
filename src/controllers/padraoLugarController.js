@@ -103,7 +103,8 @@ const persist = async (req , res) => {
 
         const response = await update(req.body, id);
         return res.status(201).send({
-            message: error.message
+            message: 'atualizado com sucesso',
+            data: response,
         });
 
 

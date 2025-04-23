@@ -227,8 +227,8 @@ const comprarIngresso = async (req, res) => {
         // Atualiza o lugar como ocupado
         lugares[indexLugar].ocupado = true;
         lugares[indexLugar].idUsuario = usuario.id;
-        console.log(lugares);
         
+    
         
         // Atualiza a sessão com o novo JSON
         sessao.lugares = lugares;
@@ -240,7 +240,8 @@ const comprarIngresso = async (req, res) => {
         const novaCompra = await UsuarioSessao.create({
             idSessao: sessao.id,
             idUsuario: usuario.id,
-            valorAtual: sessao.preco // pode multiplicar depois se tiver quantidade
+            valorAtual: sessao.preco, // pode multiplicar depois se tiver quantidade
+            status: "Comprado"
         });
     
 
@@ -253,7 +254,7 @@ const comprarIngresso = async (req, res) => {
                     dataFinal: sessao.dataFinal
                 },
                 lugar: lugares[indexLugar],
-                compra: novaCompra
+                compra: novaCompra,
             }
         });
 
@@ -283,7 +284,6 @@ const cancelarIngresso = async (req, res) => {
             throw res.status(400).send('Compra não encontrada');
         };
 
-
     
         const idSessao = response.idSessao;
         const idUsuario = response.idUsuario;
@@ -298,6 +298,10 @@ const cancelarIngresso = async (req, res) => {
 
         const lugares = sessao.toJSON().lugares;
         const indexLugar = lugares.findIndex(lugar => lugar.idUsuario === idUsuario);
+        console.log(lugares);
+        console.log(indexLugar);
+        
+        
 
 
 
@@ -313,10 +317,12 @@ const cancelarIngresso = async (req, res) => {
         lugares[indexLugar].ocupado = false;
         lugares[indexLugar].idUsuario = null;
 
+        response.status = "Cancelado";
         sessao.lugares = lugares;
-        await sessao.save();
 
-        await response.destroy();
+        await sessao.save();
+        await response.save();
+
 
         return res.status(200).send({
             message: 'Ingresso cancelado com sucesso',

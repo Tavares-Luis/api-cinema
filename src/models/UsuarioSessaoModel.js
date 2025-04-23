@@ -17,6 +17,12 @@ const UsuarioSessao = sequelize.define(
             allowNull: false,
             defaultValue: 0,
         },
+        status: {
+            type: DataTypes.STRING,
+            allowNull: false,
+            defaultValue: "Disponivel"
+            
+        }
     },
     {
         freezeTableName: true,

@@ -1,7 +1,11 @@
+import { where } from "sequelize";
 import Sessao from "../models/SessaoModel.js";
 import Usuario from "../models/UsuarioModel.js";
 import UsuarioSessao from "../models/UsuarioSessaoModel.js";
 import salaController from "./salaController.js";
+import Filme from "../models/FilmeModel.js";
+import Sala from "../models/SalaModel.js";
+import moment from 'moment-timezone';
 
 
 const get = async (req , res) => {
@@ -214,7 +218,7 @@ const comprarIngresso = async (req, res) => {
 
         const lugares = sessao.toJSON().lugares;
         const indexLugar = lugares.findIndex(lugar => lugar.nomeLugar === nomeLugar);
-        console.log(indexLugar);
+       
         
         if (indexLugar === -1) {
             return res.status(404).send({ message: "Lugar nao encontrado na sessao" });
@@ -233,7 +237,7 @@ const comprarIngresso = async (req, res) => {
         // Atualiza a sessão com o novo JSON
         sessao.lugares = lugares;
         await sessao.save();
-        console.log(sessao.lugares);
+        
         
 
         // Cria a entrada em usuarios_sessoes
@@ -336,6 +340,89 @@ const cancelarIngresso = async (req, res) => {
     };
 };
 
+// * Listar todas as sessoes compradas do usuario X, filme horario e sala
+
+const listarUsuarioSessao = async (req , res) => {
+    
+    
+    try {
+
+        const id = req.params.id ? req.params.id.toString().replace(/\D/g, '') : null;
+
+        if(!id){
+           return res.status(404).send({
+                message: 'Informe o id.',
+            });
+        }
+
+        const comprasUsuario = await UsuarioSessao.findAll({
+            
+            where: {
+                idUsuario: id,
+            },
+            include: [
+                {
+                    model: Sessao,
+                    as: 'sessao',
+                    include: [
+                        {
+                            model: Filme,
+                            as: 'filme',
+                            attributes: ['nome'],
+                        },
+                        {
+                            model: Sala,
+                            as: 'sala',
+                            attributes: ['observacao'],
+                        }
+                    ],
+                    attributes: ['dataInicio', 'dataFinal'],
+                }
+            ]
+        });
+
+
+        if(comprasUsuario.length===0){
+            return res.status(404).send('Usuario não possui nenhuma sessão.');
+        }
+
+
+        const resultadoFormatado = comprasUsuario.map(compra=> {
+            const sessao = compra.sessao;
+
+            const filme = sessao.filme.nome;
+            const sala = sessao.sala.observacao;
+
+
+            const horarioInicio = moment(sessao.dataInicio).tz('America/Sao_Paulo').format('DD/MM/YYYY HH:mm');
+            const horarioFinal = moment(sessao.dataFinal).tz('America/Sao_Paulo').format('DD/MM/YYYY HH:mm')
+
+
+            return {
+                filme,
+                sala,
+                horarioInicio,
+                horarioFinal,
+            }
+        });
+
+        
+
+        return res.status(200).send({
+            message: 'Dados encontrados',
+            data: resultadoFormatado,
+        });
+
+    } catch (error) {
+        return res.status(500).send({
+            message: error.message
+        });
+    }
+};
+
+
+
+
 export default {
     get, 
     persist,
@@ -343,4 +430,5 @@ export default {
     getLugaresLivres,
     comprarIngresso,
     cancelarIngresso,
+    listarUsuarioSessao,
 }

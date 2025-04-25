@@ -1,6 +1,8 @@
+import { NUMBER } from "sequelize";
 import PadraoLugar from "../models/PadraoLugarModel.js";
 import Sala from "../models/SalaModel.js";
 import Sessao from "../models/SessaoModel.js";
+import UsuarioSessao from "../models/UsuarioSessaoModel.js";
 
 
 const get = async (req , res) => {
@@ -164,8 +166,71 @@ const destroy = async (req , res ) => {
 };
 
 
+const getFeedback = async (req , res) => {
+    
+    try {
+        const id = req.params.id ? req.params.id.toString().replace(/\D/g, '') : null;
+
+        if(!id){
+
+            return res.status(200).send({
+                message: 'Informe o id',
+            });
+        }
+
+
+        const comprasAssentos = await UsuarioSessao.findAll({
+            
+            where: {
+                idSessao: id,
+                status: 'Comprado',
+            },
+            attributes: ['valorAtual'],
+           
+        });
+        const cancelAssentos = await UsuarioSessao.findAll({
+            
+            where: {
+                idSessao: id,
+                status: 'Cancelado',
+            },
+            attributes: ['valorAtual'],
+           
+        });
+
+        const qtdComprada = comprasAssentos.length;
+        const qtdCancelada = cancelAssentos.length;
+
+        const valorCompras = comprasAssentos.reduce((acumulador, index) => acumulador + Number(index.valorAtual), 0);
+        const valorCancel = cancelAssentos.reduce((acumulador, index) => acumulador + Number(index.valorAtual), 0);
+
+
+
+        return res.status(200).send({
+            message: 'Relatório',
+            data: {
+                vendas: {
+                    valor: valorCompras,
+                    quantidade: qtdComprada
+                  },
+                  cancelamentos: {
+                    valor: valorCancel,
+                    quantidade: qtdCancelada
+                  }
+            }
+        });
+
+    } catch (error) {
+        return res.status(500).send({
+            message: error.message
+        });
+    }
+};
+
+
 export default {
     get, 
     persist,
     destroy,
+    getFeedback,
 }

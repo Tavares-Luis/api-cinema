@@ -1,8 +1,9 @@
 import cargoController from "../controllers/cargoController.js";
+import loginMiddleware from "../middlewares/loginMiddleware.js";
 
 
 export default (app) => {
-  app.get('/cargo', cargoController.get);
+  app.get('/cargo', loginMiddleware, cargoController.get);
   app.get('/cargo/:id', cargoController.get);
   app.post('/cargo', cargoController.persist);
   app.patch('/cargo/:id', cargoController.persist);

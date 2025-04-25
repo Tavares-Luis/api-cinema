@@ -22,6 +22,10 @@ const Usuario = sequelize.define(
             allowNull: false,
             unique: true,
         },
+        passwordHash:{
+            type: DataTypes.TEXT,
+            allowNull: false,
+        },
         cpf:{
             type: DataTypes.STRING(14),
             allowNull: false,

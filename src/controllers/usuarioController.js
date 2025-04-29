@@ -3,6 +3,9 @@ import bcrypt from "bcrypt";
 import { response } from "express";
 import jwt from "jsonwebtoken";
 import Cargo from "../models/CargoModel.js";
+import sendMail from '../utils/email.js';
+import { generateResetToken } from '../utils/passwordService.js'
+
 
 const get = async (req , res) => {
     
@@ -284,7 +287,107 @@ const getDataByToken = async (req , res) => {
     }
 
 };
-//
+
+const forgotPassword = async (req , res) => {
+    const { email } = req.body;
+
+    try {
+
+        const user = await Usuario.findOne({
+            where: {
+                email
+            }
+        });
+
+        if(!user){
+            return res.status(404).send({
+                message: 'E-mail sem usuario cadastrado!'
+            });
+        };
+
+        const { token , expires } = generateResetToken();
+
+        await user.update({
+
+            resetToken: token,
+            resetTokenExpire: expires,
+
+        });
+
+        const emailBody = `
+            <h3>Olá ${user.nome},</h3>
+            <p>Use o código abaixo para redefinir sua senha:</p>
+            <p><strong>${token}</strong></p>
+            <p>Este código expira em 30 minutos !!</p>
+        `;
+
+        await sendMail(user.email, emailBody, 'Recuperacao de senha');
+
+        return res.status(200).send({
+            message: 'E-mail enviado com sucesso'
+          });
+        
+    } catch (error) {
+        return res.status(500).send({
+            message: error.message
+        });
+    }
+};
+
+const resetPassword = async (req , res) =>{
+    const { token, newPassword } = req.body;
+
+    try {
+        if(!token || !newPassword){
+            return res.status(400).send({
+                message: 'Token ou senha não informados.'
+            });
+        };
+
+        const user = await Usuario.findOne({
+            where: {
+                resetToken: token,
+            }
+        });
+
+        if(!user){
+            return res.status(400).send({
+                message: 'Token inválido ou não encontrado!'
+            });
+        };
+
+
+        const currentTime = new Date();
+
+        if(currentTime > user.resetTokenExpire){
+            return res.status(400).send({
+                message: 'O token de recuperacao expirou !!'
+            });
+        };
+
+        const newPasswordHash = await bcrypt.hash(newPassword, 10);
+
+        await user.update({
+            passwordHash: newPasswordHash,
+            resetToken: null,
+            resetTokenExpire: null
+        });
+
+
+        return res.status(200).send({
+            message: 'Senha atualizada com sucesso!'
+        });
+
+
+    } catch (error) {
+        return res.status(500).send({
+            message: error.message
+        });
+    }
+
+}
+
+
 
 export default {
     get, 
@@ -292,4 +395,6 @@ export default {
     destroy,
     login,
     getDataByToken,
+    forgotPassword,
+    resetPassword,
 }

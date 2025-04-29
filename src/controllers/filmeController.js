@@ -1,6 +1,10 @@
+import fileUpload from "express-fileupload";
 import Filme from "../models/FilmeModel.js";
-
-
+import uploadFile from "../utils/uploadFile.js";
+import fs from 'fs/promises';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
 const get = async (req , res) => {
     
@@ -40,14 +44,14 @@ const get = async (req , res) => {
     }
 };
 
-const create = async (corpo) => {
+const create = async (req) => {
     try {
-        const {
-            nome,
-            descricao,
-            autor,
-            duracao,
-        } = corpo;
+        const { 
+            nome, 
+            descricao, 
+            autor, 
+            duracao, 
+        } = req.body;
 
         const response = await Filme.create({
             nome,
@@ -56,34 +60,88 @@ const create = async (corpo) => {
             duracao,
         });
 
-        return response;
+        if (req.files && req.files.imagemCartaz) {
+            const file = req.files.imagemCartaz;
+            if (!file.mimetype.startsWith('image/')) {
+                throw new Error('Apenas imagens são arquivos válidos!');
+            }
 
+            const resultUpload = await uploadFile(file, {
+                id: response.id,
+                tipo: 'image',
+                tabela: 'filmes',
+            });
+            console.log("//");
+            console.log(resultUpload);
+
+            if (resultUpload.type === 'success') {
+                await response.update({
+                    imagemCartaz: resultUpload.relativePath,
+                });
+            } else {
+                throw new Error('Erro no upload da imagem: ' + resultUpload.message);
+            }
+        }
+        return response; 
     } catch (error) {
-        throw new Error (error.message);
+        throw new Error(error.message); 
+
     }
 };
 
-const update = async (corpo , id) => {
-
+const update = async (req, id) => {
     try {
-        
-        const response = await Filme.findOne({
-            where:{
-                id
-            }
-        });
+        const __dirname = dirname(fileURLToPath(import.meta.url));
 
-        if(!response){
-            throw new Error ('Nao achou');
+        const response = await Filme.findOne({ where: { id } });
+
+        if (!response) {
+            throw new Error('Filme não encontrado');
         }
 
-        Object.keys(corpo).forEach((item)=> response[item] = corpo[item]);
+        if (req.body && typeof req.body === 'object') {
+            Object.keys(req.body).forEach((item) => {
+                response[item] = req.body[item];
+            });
+        }
+        
+        if (req.files && req.files.imagemCartaz) {
+            const file = req.files.imagemCartaz;
+            
+            if (!file.mimetype.startsWith('image/')) {
+                throw new Error('Apenas imagens são arquivos válidos!');
+            }
+            
+            if (response.imagemCartaz) {
+                const oldPath = path.join(__dirname, '..','..', 'public', response.imagemCartaz);
+                
+                try {
+                    await fs.unlink(oldPath);
+                    console.log('Arquivo antigo excluído com sucesso');
+                } catch (err) {
+                    throw new Error('Erro ao excluir o arquivo antigo!');
+                }
+            }
+            
+            const resultUpload = await uploadFile(file, {
+                id: response.id,
+                tipo: 'image',
+                tabela: 'filmes',
+            });
+            
+            if (resultUpload.type === 'success') {
+                await response.update({
+                    imagemCartaz: resultUpload.relativePath,
+                });
+            } else {
+                throw new Error('Erro no upload da imagem');
+            }
+        }
         await response.save();
 
-        return response;
-
+        return response; 
     } catch (error) {
-        throw new Error (error.message);
+        throw new Error(error.message);
     }
 };
 
@@ -92,14 +150,14 @@ const persist = async (req , res ) => {
         const id = req.params.id ? req.params.id.toString().replace(/\D/g, '') : null;
 
         if(!id){
-            const response = await create (req.body);
+            const response = await create (req, res);
             return res.status(200).send({
                 message: 'Criado com sucesso',
                 data: response,
             });
         };
 
-        const response = await update (req.body, id);
+        const response = await update (req, id, res);
         return res.status(201).send({
             message: 'atualizado com sucesso',
             data: response,
@@ -118,6 +176,8 @@ const destroy = async (req , res ) => {
 
     try {
         
+        const __dirname = dirname(fileURLToPath(import.meta.url));
+
         if(!id){
             return res.status(400).send('Informa ae paezao');
         };
@@ -132,6 +192,17 @@ const destroy = async (req , res ) => {
             throw res.status(400).send('Nao achou');
         };
 
+        if (response.imagemCartaz) {
+            const oldPath = path.join(__dirname, '..', '..', 'public', response.imagemCartaz);
+
+            try {
+                await fs.unlink(oldPath);
+                console.log('Arquivo antigo excluído com sucesso');
+            } catch (err) {
+                throw new Error('Erro ao excluir o arquivo antigo!');
+            }
+        }
+        
         await response.destroy();
 
         return res.status(200).send({

@@ -23,6 +23,7 @@ const Usuario = sequelize.define(
             unique: true,
         },
         passwordHash:{
+            field: 'password_hash',
             type: DataTypes.TEXT,
             allowNull: false,
         },
@@ -35,6 +36,16 @@ const Usuario = sequelize.define(
             type: DataTypes.BOOLEAN,
             defaultValue: false,
             allowNull: false,
+        },
+        resetToken: {
+            field: 'reset_token',
+            type: DataTypes.TEXT,
+            allowNull: true
+        },
+        resetTokenExpire: {
+            field: 'reset_token_expire',
+            type: DataTypes.DATE,
+            allowNull: true
         }
     },
     {
